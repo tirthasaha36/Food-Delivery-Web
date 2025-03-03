@@ -1,6 +1,6 @@
 const express = require("express");
 const Order = require("../models/Order");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware"); // ✅ Correct import
 
 const router = express.Router();
 
@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/", authMiddleware, async (req, res) => {
   const { restaurant, items, totalPrice } = req.body;
 
+  // Validate required fields
   if (!restaurant || !items || !totalPrice) {
     return res.status(400).json({ error: "All fields (restaurant, items, totalPrice) are required." });
   }
@@ -30,7 +31,8 @@ router.post("/", authMiddleware, async (req, res) => {
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id; // Extract user from token
-    const orders = await Order.find({ user: userId }).populate("restaurant").populate("items");
+    const orders = await Order.find({ user: userId })
+      .populate("restaurant"); // ✅ Removed populate("items") if items are embedded
 
     res.status(200).json(orders);
   } catch (err) {

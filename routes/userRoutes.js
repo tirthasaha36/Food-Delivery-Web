@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware, adminMiddleware } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -69,6 +69,16 @@ router.put("/me", authMiddleware, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Get all users (Admin Only)
+router.get("/", authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const users = await User.find().select("-password");
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;
