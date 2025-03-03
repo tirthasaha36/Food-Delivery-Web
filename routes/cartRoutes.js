@@ -2,7 +2,6 @@ const express = require("express");
 const Cart = require("../models/Cart");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const MenuItem = require("../models/MenuItem");
-const Order = require("../models/Order"); // Import Order model
 
 const router = express.Router();
 
@@ -79,30 +78,6 @@ router.delete("/clear", authMiddleware, async (req, res) => {
         res.status(200).json({ message: "Cart cleared" });
     } catch (err) {
         res.status(500).json({ error: "Server error: " + err.message });
-    }
-});
-
-/** 🛍️ Place Order */
-router.post("/order", authMiddleware, async (req, res) => {
-    const { restaurant, items, totalPrice } = req.body;
-
-    try {
-        // Create a new order
-        const newOrder = new Order({
-            user: req.user._id,
-            restaurant,
-            items,
-            totalPrice
-        });
-
-        await newOrder.save();
-
-        // ✅ Clear cart after order is placed
-        await Cart.findOneAndDelete({ user: req.user._id });
-
-        res.status(201).json({ message: "Order placed successfully", order: newOrder });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
     }
 });
 
