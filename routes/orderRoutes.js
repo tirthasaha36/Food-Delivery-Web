@@ -1,16 +1,11 @@
 const express = require("express");
 const Order = require("../models/Order");
-const Cart = require("../models/Cart");
-const { authMiddleware } = require("../middleware/authMiddleware"); // Ensure correct import
-const { adminMiddleware } = require("../middleware/adminMiddleware"); // Ensure correct import
+const { authMiddleware } = require("../middleware/authMiddleware");
+const { adminMiddleware } = require("../middleware/adminMiddleware");
 
 const router = express.Router();
 
-// Debugging: Check if middleware functions are properly imported
-console.log("authMiddleware:", authMiddleware);
-console.log("adminMiddleware:", adminMiddleware);
-
-// Place an Order
+// ✅ Place an Order
 router.post("/", authMiddleware, async (req, res) => {
     try {
         const { restaurant, items, totalPrice, paymentMethod, address } = req.body;
@@ -44,17 +39,33 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 });
 
-/** ✅ Get User's Orders */
-router.get("/", authMiddleware, async (req, res) => {
+// ✅ Get All Orders (Admin Only)
+router.get("/", authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const orders = await Order.find({ user: req.user._id }).populate("items.itemId");
+        const orders = await Order.find()
+            .populate("user", "name email")
+            .populate("restaurant", "name")
+            .sort({ createdAt: -1 });
+
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ✅ Get User's Orders (Authenticated User)
+router.get("/my-orders", authMiddleware, async (req, res) => {
+    try {
+        const orders = await Order.find({ user: req.user.id })
+            .populate("restaurant items.itemId");
+        
         res.json(orders);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-/** ✅ Get Order by ID */
+// ✅ Get Order by ID (Authenticated User)
 router.get("/:orderId", authMiddleware, async (req, res) => {
     try {
         const order = await Order.findById(req.params.orderId).populate("items.itemId");
@@ -67,28 +78,36 @@ router.get("/:orderId", authMiddleware, async (req, res) => {
     }
 });
 
-/** ✅ Update Order Status (Admin Only) */
+// ✅ Update Order Status (Admin Only)
 router.put("/:orderId/status", authMiddleware, adminMiddleware, async (req, res) => {
-    const { status } = req.body;
-
     try {
-        const order = await Order.findById(req.params.orderId);
+        const { status } = req.body;
+        const validStatuses = ["pending", "confirmed", "delivered"];
 
-        if (!order) return res.status(404).json({ message: "Order not found" });
+        console.log("🔍 Received Order Status:", status);
+
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: `Invalid order status. Allowed values: ${validStatuses.join(", ")}` });
+        }
+
+        const order = await Order.findById(req.params.orderId);
+        if (!order) return res.status(404).json({ error: "Order not found" });
 
         order.status = status;
         await order.save();
 
-        res.json({ message: "Order status updated", order });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.json({ message: "Order status updated successfully", order });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
-/** ✅ Delete Order (Admin Only) */
+// ✅ Delete Order (Admin Only)
 router.delete("/:orderId", authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        await Order.findByIdAndDelete(req.params.orderId);
+        const order = await Order.findByIdAndDelete(req.params.orderId);
+        if (!order) return res.status(404).json({ error: "Order not found" });
+
         res.json({ message: "Order deleted successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });
