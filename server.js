@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const User = require("./models/User");
 
 // Initialize Express App
 const app = express();
@@ -23,6 +24,25 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/restaurants", require("./routes/restaurantRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
+
+// Cleanup Job: Remove expired reset tokens every hour
+const cleanupExpiredTokens = async () => {
+  try {
+    const result = await User.updateMany(
+      { resetPasswordExpires: { $lt: Date.now() } },
+      { $unset: { resetPasswordToken: 1, resetPasswordExpires: 1 } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`🧹 Cleaned up ${result.modifiedCount} expired reset tokens`);
+    }
+  } catch (error) {
+    console.error("❌ Error during cleanup:", error);
+  }
+};
+
+// Run cleanup job every hour
+setInterval(cleanupExpiredTokens, 60 * 60 * 1000); // 1 
+
 
 
 // Default Route
