@@ -78,33 +78,3 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-// // Forgot Password
-// exports.forgotPassword = async (req, res) => {
-//   const { email } = req.body;
-//   const user = await User.findOne({ email });
-
-//   if (!user) return res.status(404).json({ error: "User not found" });
-
-//   const resetToken = crypto.randomBytes(20).toString("hex");
-//   user.resetPasswordToken = resetToken;
-//   user.resetPasswordExpires = Date.now() + 86400000; // 24 hours
-//   await user.save();
-
-//   const transporter = nodemailer.createTransport({
-//     service: "Gmail",
-//     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-//   });
-
-//   const mailOptions = {
-//     to: user.email,
-//     from: process.env.EMAIL_USER,
-//     subject: "Password Reset",
-//     text: `Click this link to reset your password: http://localhost:5000/reset-password/${resetToken}`
-//   };
-
-//   transporter.sendMail(mailOptions, (err) => {
-//     if (err) return res.status(500).json({ error: "Email could not be sent" });
-//     res.json({ message: "Reset email sent successfully" });
-//   });
-// };
