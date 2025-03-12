@@ -1,6 +1,6 @@
 const express = require("express");
 const Restaurant = require("../models/Restaurant");
-const { authMiddleware, adminMiddleware } = require("../middleware/authMiddleware"); // ✅ FIXED IMPORT
+const { authMiddleware, adminMiddleware } = require("../middlewares/authMiddleware"); // ✅ FIXED IMPORT
 
 const router = express.Router();
 

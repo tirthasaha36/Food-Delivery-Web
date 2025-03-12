@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cloudinary = require("cloudinary").v2;
 
 // Generate JWT Token
 const generateToken = (id, role) => {
@@ -79,20 +80,38 @@ exports.getUserProfile = async (req, res) => {
   }
 };
 
-// Update User Profile
+// 🔹 Update User Profile (Supports Profile Pic Upload & Delete)
 exports.updateUserProfile = async (req, res) => {
-  const { name, email, password, profilePic } = req.body;
-
   try {
+    const { name, email, password, removeProfilePic } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    // Update fields if provided
+    // 🔹 Handle Profile Picture Removal
+    if (removeProfilePic === "true" && user.profilePic) {
+      // Extract Cloudinary public_id correctly
+      const publicId = user.profilePic.match(/\/v\d+\/(.+)\./)[1];
+
+      // Delete image from Cloudinary
+      await cloudinary.uploader.destroy(publicId);
+      user.profilePic = null; // Remove from DB
+    }
+
+    // 🔹 Handle Profile Picture Update
+    if (req.file) {
+      // Delete previous Cloudinary image if it exists
+      if (user.profilePic) {
+        const publicId = user.profilePic.match(/\/v\d+\/(.+)\./)[1];
+        await cloudinary.uploader.destroy(publicId);
+      }
+
+      console.log("Cloudinary Uploaded File:", req.file); // Debugging log
+      user.profilePic = req.file.secure_url; // Save Cloudinary URL
+    }
+
+    // 🔹 Update Other Profile Fields
     if (name) user.name = name;
     if (email) user.email = email;
-    if (profilePic) user.profilePic = profilePic; // Update profile picture
-
-    // Update password only if provided
     if (password) {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(password, salt);
@@ -100,8 +119,9 @@ exports.updateUserProfile = async (req, res) => {
 
     await user.save();
     res.json({ success: true, message: "Profile updated successfully", user });
+
   } catch (err) {
-    console.error("Profile Update Error:", err);
+    console.error("❌ Profile Update Error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

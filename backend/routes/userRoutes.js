@@ -4,8 +4,9 @@ const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const User = require("../models/User");
-const { authMiddleware, adminMiddleware } = require("../middleware/authMiddleware");
+const { authMiddleware, adminMiddleware } = require("../middlewares/authMiddleware");
 const userController = require("../controllers/userController");
+const upload = require("../middlewares/uploadMiddleware");
 
 const router = express.Router();
 
@@ -18,8 +19,8 @@ router.post("/login", userController.loginUser);
 // ✅ Fetch user profile (Protected)
 router.get("/me", authMiddleware, userController.getUserProfile);
 
-// ✅ Update user profile (Protected)
-router.put("/me", authMiddleware, userController.updateUserProfile);
+// ✅ Update user profile (Supports Profile Picture Upload & Delete)
+router.put("/me", authMiddleware, upload.single("profilePic"), userController.updateUserProfile);
 
 // ✅ Get all users (Admin Only)
 router.get("/", authMiddleware, adminMiddleware, userController.getUsers);
@@ -32,8 +33,8 @@ router.post("/forgot-password", async (req, res) => {
         if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
         // Generate reset token
-        const resetToken = crypto.randomBytes(20).toString("hex");
-        user.resetPasswordToken = resetToken;
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        user.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
 
         // Save the token in the database
@@ -54,17 +55,11 @@ router.post("/forgot-password", async (req, res) => {
             to: user.email,
             from: process.env.EMAIL_USER,
             subject: "Password Reset",
-            text: `Click this link to reset your password: http://localhost:5000/reset-password/${resetToken}`
+            text: `Click this link to reset your password: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`
         };
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) {
-                console.error("❌ Email Sending Error:", err);
-                return res.status(500).json({ success: false, message: "Email could not be sent" });
-            }
-            console.log(`📩 Email sent: ${info.response}`);
-            res.json({ success: true, message: "Reset email sent successfully" });
-        });
+        await transporter.sendMail(mailOptions);
+        res.json({ success: true, message: "Reset email sent successfully" });
 
     } catch (err) {
         console.error("❌ Forgot Password Error:", err);
@@ -76,8 +71,9 @@ router.post("/forgot-password", async (req, res) => {
 router.post("/reset-password/:token", async (req, res) => {
     const { password } = req.body;
     try {
+        const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
         const user = await User.findOne({
-            resetPasswordToken: req.params.token,
+            resetPasswordToken: hashedToken,
             resetPasswordExpires: { $gt: Date.now() } // Ensure token is not expired
         });
 

@@ -2,7 +2,7 @@ const express = require("express");
 const Razorpay = require("razorpay");
 require("dotenv").config();
 const crypto = require("crypto");
-const { authMiddleware } = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middlewares/authMiddleware");
 
 const router = express.Router();
 
