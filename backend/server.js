@@ -4,6 +4,10 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const User = require("./models/User");
 
+// Debugging: Check if environment variables are loaded correctly
+// console.log("RAZORPAY_KEY_ID:", process.env.RAZORPAY_KEY_ID);
+// console.log("RAZORPAY_KEY_SECRET:", process.env.RAZORPAY_KEY_SECRET);
+
 // Initialize Express App
 const app = express();
 
