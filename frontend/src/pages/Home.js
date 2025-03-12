@@ -7,19 +7,19 @@ const Home = () => {
     {
       id: 1,
       name: "Pizza",
-      image: "https://via.placeholder.com/300x200", // Replace with actual image URL
+      image: "https://images.unsplash.com/photo-1576458088443-04a19bb13da6?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Replace with actual image URL
       description: "Delicious cheesy pizza with toppings.",
     },
     {
       id: 2,
       name: "Burger",
-      image: "https://via.placeholder.com/300x200",
+      image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?q=80&w=2072&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       description: "Juicy burger with fresh ingredients.",
     },
     {
       id: 3,
       name: "Pasta",
-      image: "https://via.placeholder.com/300x200",
+      image: "https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       description: "Italian pasta with creamy sauce.",
     },
   ];

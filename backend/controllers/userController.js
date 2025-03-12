@@ -1,8 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
-const crypto = require("crypto");
 
 // Generate JWT Token
 const generateToken = (id, role) => {
@@ -52,14 +50,14 @@ exports.loginUser = async (req, res) => {
     // Send token in HTTP-only cookie for security
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure in production
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
 
     res.json({
       success: true,
       message: "Login successful",
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role, profilePic: user.profilePic },
       token,
     });
   } catch (err) {
@@ -83,15 +81,22 @@ exports.getUserProfile = async (req, res) => {
 
 // Update User Profile
 exports.updateUserProfile = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, profilePic } = req.body;
 
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
+    // Update fields if provided
     if (name) user.name = name;
     if (email) user.email = email;
-    if (password) user.password = await bcrypt.hash(password, 10);
+    if (profilePic) user.profilePic = profilePic; // Update profile picture
+
+    // Update password only if provided
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
 
     await user.save();
     res.json({ success: true, message: "Profile updated successfully", user });
