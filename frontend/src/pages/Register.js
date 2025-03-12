@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Button, Card, Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -9,16 +10,31 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match! ❌");
+      alert("Passwords do not match!");
       return;
     }
 
-    alert("Registration Successful! 🎉");
-    navigate("/login"); // Redirect to login page after successful registration
+    try {
+      const response = await axios.post("http://localhost:5000/api/users/register", {
+        name,
+        email,
+        password,
+      });
+
+      if (response.data.success) {
+        alert("Registration Successful!");
+        navigate("/login");
+      } else {
+        alert(response.data.message);
+      }
+    } catch (error) {
+      console.error("Registration Error:", error);
+      alert("Registration failed. Please try again.");
+    }
   };
 
   return (
@@ -27,7 +43,7 @@ const Register = () => {
         <Card.Body>
           <h3 className="text-center mb-4">Register</h3>
           <Form onSubmit={handleRegister}>
-            <Form.Group className="mb-3" controlId="formBasicName">
+            <Form.Group className="mb-3">
               <Form.Label>Full Name</Form.Label>
               <Form.Control
                 type="text"
@@ -38,7 +54,7 @@ const Register = () => {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="formBasicEmail">
+            <Form.Group className="mb-3">
               <Form.Label>Email Address</Form.Label>
               <Form.Control
                 type="email"
@@ -49,7 +65,7 @@ const Register = () => {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="formBasicPassword">
+            <Form.Group className="mb-3">
               <Form.Label>Password</Form.Label>
               <Form.Control
                 type="password"
@@ -60,7 +76,7 @@ const Register = () => {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="formBasicConfirmPassword">
+            <Form.Group className="mb-3">
               <Form.Label>Confirm Password</Form.Label>
               <Form.Control
                 type="password"
